@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="google-site-verification" content="jfSEE12raXt1EYY-p5OO2UWukG4HyC7He-mmM5JuAuQ" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timetable Generator</title>
@@ -10,6 +9,15 @@
     <script>
         function generateTimetable() {
             var courses = document.getElementById('courses').value;
+            var spinner = document.getElementById('spinner-overlay');
+            spinner.style.display = 'flex'; // Show the spinner
+
+            if (!courses) {
+                alert('Please enter the exact names of the courses.');
+                location.reload();
+                return; // Exit the function if input is empty
+            }
+
             fetch('/generate', {
                 method: 'POST',
                 headers: {
@@ -31,15 +39,21 @@
             .catch(error => {
                 alert('Error generating timetable.');
                 console.error('Error:', error);
+            })
+            .finally(() => {
+                spinner.style.display = 'none'; // Hide the spinner after processing
             });
         }
     </script>
 </head>
 <body>
+    <!-- Heading -->
+    <div class="heading">NUCES FAST TIMETABLE GENERATOR</div>
+
     <div class="container d-flex justify-content-center align-items-center min-vh-100">
         <form class="form" action="javascript:void(0);">
             <p class="field required">
-                <label class="label required" for="courses">Enter exact name of courses (comma-separated) in the format : COURSE (MAJOR-SECTION) eg: OS (SE-B)</label>
+                <label class="label required" for="courses">Enter exact name of courses (comma-separated) in the format : COURSE (MAJOR-SECTION) <br> eg: OS (SE-B)</label>
                 <textarea class="text-input" id="courses" name="courses" rows="4" required></textarea>
             </p>
             <p class="field">
@@ -49,6 +63,11 @@
     </div>
     <div class="footer">
         Made with <span style="color: #e25555;">&hearts;</span> by <a href="https://github.com/AsharAmir" target="_blank">Ashar</a>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="spinner-overlay" id="spinner-overlay">
+        <div class="spinner"></div>
     </div>
 </body>
 </html>

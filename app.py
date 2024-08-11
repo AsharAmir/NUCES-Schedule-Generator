@@ -6,7 +6,6 @@ import io
 
 app = Flask(__name__)
 
-# Google Sheets setup
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("united-wavelet-432211-p8-d2bc6ea72002.json", scope)
 client = gspread.authorize(creds)
@@ -19,15 +18,15 @@ def index():
 
 @app.route('/generate', methods=['POST'])
 def generate_timetable():
-    # Get user input
     user_courses = request.form.get('courses', '')
     courses = [course.strip() for course in user_courses.split(',') if course.strip()]
-    
+
     timetable = pd.DataFrame(columns=["Day", "Time", "Room", "Course"])
 
     def parse(sheetData, sheetName):
+
         df = pd.DataFrame(sheetData[1:], columns=sheetData[0])
-        time_row_index = 3
+        time_row_index = 3  # Index where time information is stored
 
         for i, row in df.iterrows():
             for col in df.columns:
@@ -56,7 +55,8 @@ def generate_timetable():
         pivot_table.to_excel(writer, sheet_name="Timetable")
 
     output.seek(0)
-    return send_file(output, as_attachment=True, attachment_filename="formatted_timetable.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+    return send_file(output, as_attachment=True, download_name="formatted_timetable.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__ == '__main__':
     app.run(debug=True)
