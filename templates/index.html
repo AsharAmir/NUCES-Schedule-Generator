@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-site-verification" content="jfSEE12raXt1EYY-p5OO2UWukG4HyC7He-mmM5JuAuQ" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timetable Generator</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <script>
+        function generateTimetable() {
+            var courses = document.getElementById('courses').value;
+            fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'courses': courses
+                })
+            })
+            .then(response => response.blob())
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'formatted_timetable.xlsx';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                alert('Error generating timetable.');
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <form class="form" action="javascript:void(0);">
+            <p class="field required">
+                <label class="label required" for="courses">Enter exact name of courses (comma-separated) in the format : COURSE (MAJOR-SECTION) eg: OS (SE-B)</label>
+                <textarea class="text-input" id="courses" name="courses" rows="4" required></textarea>
+            </p>
+            <p class="field">
+                <input class="button" type="submit" value="Generate Timetable" onclick="generateTimetable()">
+            </p>
+        </form>
+    </div>
+    <div class="footer">
+        Made with <span style="color: #e25555;">&hearts;</span> by <a href="https://github.com/AsharAmir" target="_blank">Ashar</a>
+    </div>
+</body>
+</html>
