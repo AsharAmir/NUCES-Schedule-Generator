@@ -10,7 +10,7 @@ Tired of the huge, annoying spreadsheet FAST NUCES shares with you for your clas
 
 ## Demo
 
-You can view the live demo of the NUCES Schedule Generator here: [Live Demo](https://nuces-timetable-parser-priv.onrender.com/) 
+You can view the live demo of the NUCES Schedule Generator here: [Live Demo](https://nuces-schedule-gen.onrender.com/) 
 
 ## Requirements
 
