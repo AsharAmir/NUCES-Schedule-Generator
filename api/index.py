@@ -65,6 +65,10 @@ SCHOOLS = {
 def index():
     return render_template('simple.html')
 
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return app.send_static_file(filename)
+
 @app.route('/api/schools')
 def get_schools():
     """Get available schools with their details"""
