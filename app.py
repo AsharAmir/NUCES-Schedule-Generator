@@ -1,21 +1,40 @@
-from flask import Flask, render_template, request, send_file, jsonify
+"""
+NUCES FAST University Timetable Parser
+
+A Flask web application that extracts course timetables from Google Sheets
+and generates personalized timetables for students at NUCES FAST University.
+
+Author: @AsharAmir
+License: MIT
+"""
+
+from flask import Flask, render_template, request, jsonify
 import gspread
 import pandas as pd
 from oauth2client.service_account import ServiceAccountCredentials
-import io
 import json
 import re
 import os
 from datetime import datetime
+import logging
 
-app = Flask(__name__)
-
-# Load environment variables from .env file
+# Load environment variables
 from dotenv import load_dotenv
 load_dotenv()
 
-# Google Sheets credentials from individual environment variables
-def get_credentials():
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = Flask(__name__)
+
+def get_google_credentials():
+    """
+    Retrieve Google Sheets API credentials from environment variables.
+    
+    Returns:
+        dict: Google service account credentials
+    """
     return {
         "type": os.getenv('GOOGLE_TYPE', 'service_account'),
         "project_id": os.getenv('GOOGLE_PROJECT_ID'),
@@ -30,18 +49,30 @@ def get_credentials():
         "universe_domain": os.getenv('GOOGLE_UNIVERSE_DOMAIN', 'googleapis.com')
     }
 
-credentials_json = get_credentials()
+# Initialize Google Sheets client
+def initialize_google_sheets_client():
+    """
+    Initialize and return Google Sheets client.
+    
+    Returns:
+        gspread.Client: Authorized Google Sheets client
+    """
+    try:
+        credentials_json = get_google_credentials()
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json, scope)
+        return gspread.authorize(creds)
+    except Exception as e:
+        logger.error(f"Failed to initialize Google Sheets client: {e}")
+        raise
 
-# Google Sheets setup - use embedded credentials directly
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json, scope)
-client = gspread.authorize(creds)
+client = initialize_google_sheets_client()
 
 # Sheet configurations for different schools
 SCHOOLS = {
     'engineering': {
         'name': 'FAST School of Engineering',
-        'sheet_id': '1XA76yuFM_4mtkQW__2fryUBMe5EZ6XMWtBHxylhV6k8',
+        'sheet_id': None, # To be added later
         'calendar_link': 'https://calendar.google.com/calendar/embed?src=engineering%40nu.edu.pk&ctz=Asia%2FKarachi',
         'color': '#667eea'
     },
@@ -78,24 +109,24 @@ def get_schools():
 
 @app.route('/api/courses/<school>')
 def get_course_suggestions(school):
-    """Get course suggestions for autocomplete"""
-    print(f"DEBUG: API called for school: {school}")
+    """
+    Get course suggestions for autocomplete based on school selection.
+    
+    Args:
+        school (str): School identifier (engineering, computing, management)
+        
+    Returns:
+        JSON response with course list and metadata
+    """
+    logger.info(f"Course suggestions requested for school: {school}")
     
     if school not in SCHOOLS or not SCHOOLS[school]['sheet_id']:
-        print(f"DEBUG: School {school} not available or no sheet_id")
+        logger.warning(f"School {school} not available or missing sheet_id")
         return jsonify({'error': 'School not available'}), 400
     
-    sheet_id = SCHOOLS[school]['sheet_id']
-    print(f"DEBUG: Using sheet_id: {sheet_id}")
-    
     try:
-        # Create fresh client connection to avoid caching issues
-        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials_json, scope)
-        fresh_client = gspread.authorize(creds)
-        
-        sheet = fresh_client.open_by_key(sheet_id)
-        print(f"DEBUG: Opened sheet: {sheet.title}")
+        sheet = client.open_by_key(SCHOOLS[school]['sheet_id'])
+        logger.info(f"Successfully opened sheet: {sheet.title}")
         courses = set()
         
         for worksheet in sheet.worksheets():
@@ -125,7 +156,7 @@ def get_course_suggestions(school):
                         lab_matches = re.findall(r'[A-Za-z\s&/]+Lab\s*\([A-Z]{1,3}[-/]*[A-Z]*[,-]*\s*\d*\)', cell_value)
                         courses.update(lab_matches)
                         
-                        # Pattern 3: Special standalone courses like "FSM", "Tutorial (25)"
+                        # Pattern 3: Special standalone courses like "FSM"
                         if re.match(r'^[A-Z&/\s]{2,15}(\s*\(\d+\))?$', cell_value):
                             courses.add(cell_value)
                         
@@ -133,11 +164,8 @@ def get_course_suggestions(school):
                         time_specific = re.findall(r'([A-Za-z\s&/]+\s*\([A-Z]{1,3}[-/]*[A-Z]*\))\s+\d{2}:\d{2}-\d{2}:\d{2}', cell_value)
                         courses.update(time_specific)
         
-        # Debug info
         courses_list = sorted(list(courses))
-        print(f"DEBUG: Found {len(courses_list)} courses for {school}")
-        print(f"DEBUG: Sheet ID used: {SCHOOLS[school]['sheet_id']}")
-        print(f"DEBUG: Sample courses: {courses_list[:5] if courses_list else 'None'}")
+        logger.info(f"Found {len(courses_list)} courses for {school}")
         
         return jsonify({
             'courses': courses_list,
@@ -147,66 +175,80 @@ def get_course_suggestions(school):
         })
         
     except Exception as e:
+        logger.error(f"Failed to fetch courses for {school}: {str(e)}")
         return jsonify({'error': f'Failed to fetch courses: {str(e)}'}), 500
 
 @app.route('/api/generate', methods=['POST'])
 def generate_timetable_api():
-    """Generate timetable and return JSON data for web display"""
-    data = request.get_json()
-    courses = data.get('courses', [])
-    school = data.get('school', 'engineering')
+    """
+    Generate personalized timetable based on selected courses.
+    
+    Expected JSON payload:
+        {
+            "courses": ["Course 1 (SECTION)", "Course 2 (SECTION)"],
+            "school": "engineering" | "computing" | "management"
+        }
+        
+    Returns:
+        JSON response with structured timetable data
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+            
+        courses = data.get('courses', [])
+        school = data.get('school', 'engineering')
+        
+        if not courses:
+            return jsonify({'error': 'No courses specified'}), 400
+            
+        logger.info(f"Generating timetable for {len(courses)} courses in {school}")
 
-    if school not in SCHOOLS or not SCHOOLS[school]['sheet_id']:
-        return jsonify({'error': 'School not available or not configured'}), 400
+        if school not in SCHOOLS or not SCHOOLS[school]['sheet_id']:
+            return jsonify({'error': 'School not available or not configured'}), 400
 
-    sheet = client.open_by_key(SCHOOLS[school]['sheet_id'])
-    timetable_data = []
+        sheet = client.open_by_key(SCHOOLS[school]['sheet_id'])
+        timetable_data = []
+        
+    except Exception as e:
+        logger.error(f"Error in timetable generation setup: {str(e)}")
+        return jsonify({'error': 'Invalid request data'}), 400
 
-    def parse(sheetData, sheetName):
-        print(f"DEBUG: Parsing sheet '{sheetName}' with {len(sheetData)} rows")
-        if len(sheetData) < 2:
-            print(f"DEBUG: Sheet '{sheetName}' has insufficient data, skipping")
+    def parse_worksheet(sheet_data, sheet_name):
+        """
+        Parse a single worksheet to extract course information.
+        
+        Args:
+            sheet_data: Raw sheet data from Google Sheets
+            sheet_name: Name of the worksheet (day of week)
+        """
+        if len(sheet_data) < 2:
+            logger.debug(f"Sheet '{sheet_name}' has insufficient data, skipping")
             return
             
         try:
-            df = pd.DataFrame(sheetData[1:], columns=sheetData[0])
-            print(f"DEBUG: Created DataFrame for '{sheetName}' with shape {df.shape}")
-            print(f"DEBUG: Columns: {list(df.columns)}")
-            
+            df = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
             time_row_index = min(3, len(df) - 1)
-            print(f"DEBUG: Using time_row_index: {time_row_index}")
 
             for i, row in df.iterrows():
-                print(f"DEBUG: Processing row {i}")
                 for col in df.columns:
                     try:
                         for course in courses:
-                            # Get cell value safely
                             cell_val = row[col]
-                            print(f"DEBUG: Checking cell [{i}][{col}] = {type(cell_val)} : {repr(cell_val)}")
                             
-                            # Convert to string safely - avoid pandas Series issues
-                            try:
-                                # Handle Series/array values
-                                if hasattr(cell_val, 'iloc') or hasattr(cell_val, '__array__'):
-                                    # It's a Series or array, get first element
-                                    cell_value = str(cell_val.iloc[0] if hasattr(cell_val, 'iloc') else cell_val[0])
-                                else:
-                                    # Regular scalar value
-                                    cell_value = str(cell_val) if cell_val is not None else ""
-                                
-                                # Clean up empty/null strings
-                                if not cell_value or cell_value.lower() in ['nan', 'none', 'null']:
-                                    cell_value = ""
-                                    
-                            except Exception as conv_error:
-                                print(f"DEBUG: String conversion error: {conv_error}")
+                            # Convert cell value to string safely
+                            if hasattr(cell_val, 'iloc') or hasattr(cell_val, '__array__'):
+                                cell_value = str(cell_val.iloc[0] if hasattr(cell_val, 'iloc') else cell_val[0])
+                            else:
+                                cell_value = str(cell_val) if cell_val is not None else ""
+                            
+                            # Clean up empty/null strings
+                            if not cell_value or cell_value.lower() in ['nan', 'none', 'null']:
                                 cell_value = ""
                             
-                            print(f"DEBUG: Converted cell_value = '{cell_value}', checking for course '{course}'")
-                            
+                            # Check if course is found in this cell
                             if course and course in cell_value:
-                                print(f"DEBUG: Found course '{course}' in cell")
                                 c_idx = df.columns.get_loc(col)
                                 
                                 if time_row_index < len(df) and c_idx < len(df.columns):
@@ -217,18 +259,20 @@ def generate_timetable_api():
                                     room = str(room_val) if pd.notna(room_val) else "N/A"
                                     
                                     entry = {
-                                        'day': sheetName,
+                                        'day': sheet_name,
                                         'time': time,
                                         'room': room,
                                         'course': course
                                     }
-                                    print(f"DEBUG: Adding timetable entry: {entry}")
                                     timetable_data.append(entry)
+                                    logger.debug(f"Found {course} on {sheet_name} at {time}")
+                                    
                     except Exception as cell_error:
-                        print(f"DEBUG: Error processing cell [{i}][{col}]: {str(cell_error)}")
+                        logger.debug(f"Error processing cell [{i}][{col}]: {str(cell_error)}")
                         continue
+                        
         except Exception as sheet_error:
-            print(f"DEBUG: Error parsing sheet '{sheetName}': {str(sheet_error)}")
+            logger.error(f"Error parsing sheet '{sheet_name}': {str(sheet_error)}")
             raise
 
     try:

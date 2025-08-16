@@ -1,68 +1,89 @@
-# NUCES Schedule Generator
+# 🎓 NUCES FAST University Timetable Parser
 
-Tired of the huge, annoying spreadsheet FAST NUCES shares with you for your class schedule? Looking for a simplified website where you can input your courses and get a personalized timetable ready for download? Look no more! This solution, built with Python and Flask, is designed to make your schedule generation a breeze.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/flask-2.0+-green.svg)](https://flask.palletsprojects.com/)
+[![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](CONTRIBUTING.md)
+
+> **Transform your chaotic NUCES course spreadsheets into beautiful, personalized timetables!**
+
+No more struggling with massive, confusing Excel files. This Flask web application automatically extracts course information from Google Sheets and generates clean, downloadable timetables tailored to your enrolled courses.
 
 ## Features
 
-- **Easy Course Input**: Input your courses and their timings effortlessly.
-- **Personalized Timetable**: Generate a customized timetable based on your entered courses.
-- **Downloadable Format**: Download your timetable in a convenient format.
+- **Multi-School Support**: Engineering, Computing, and Management schools
+- **Smart Course Search**: Autocomplete with intelligent pattern matching  
+- **Interactive Timetable**: Clean, color-coded schedule display
+- **Responsive Design**: Works seamlessly on all devices
+- **Real-time Updates**: Live data from official Google Sheets
+- **Modern UI**: Simple, intuitive interface
 
-If you enjoy this webapp, please make sure to share it with your peers.
+## Quick Start
 
-## Demo
+### Live Demo
+🌐 **[Try it now: timetablenuces.vercel.app](https://timetablenuces.vercel.app/)**
 
-You can view the live demo of the NUCES Schedule Generator here: [Live Demo](https://nuces-schedule-gen.onrender.com/)
+### Local Development
 
-## Requirements
+```bash
+# Clone the repository
+git clone https://github.com/AsharAmir/NUCES-FAST-TIMETABLE-PARSER.git
+cd NUCES-FAST-TIMETABLE-PARSER
 
-- Python 3.x
-- Flask
-- Additional Python libraries (included in `requirements.txt`)
+# Install dependencies  
+pip install -r requirements.txt
 
-## Installation
+# Run the application
+python app.py
+```
 
-1. Clone this repository:
+Visit `http://localhost:5000` and start building your timetable!
 
-   ```bash
-   git clone https://github.com/AsharAmir/NUCES-Schedule-Generator.git
-   ```
+## 🤝 Contributing
 
-2. Navigate to the project directory:
+We love contributions! Check out our [Contributing Guide](CONTRIBUTING.md) for details on:
 
-   ```bash
-   cd NUCES-Schedule-Generator
-   ```
+- 🐛 **Bug Reports**: Found an issue? Let us know!
+- ✨ **Feature Requests**: Have ideas? We want to hear them!
+- 💻 **Code Contributions**: Ready to code? Follow our guidelines!
+- 📖 **Documentation**: Help make our docs better!
 
-3. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 🗺️ Contribution Roadmap
 
-## Usage
+**🎯 High Priority:**
+- UI/UX revamp with modern design
+- Performance optimization & caching
+- Mobile experience improvements
+- Accessibility enhancements
 
-1. Run the Flask server:
+**🔧 Technical Improvements:**
+- Comprehensive test suite setup
+- CI/CD pipeline implementation
+- Error monitoring integration
+- API documentation
 
-   ```bash
-   python app.py
-   ```
+**🆕 Exciting Features:**
+- Dark mode toggle
+- Export to Google Calendar
+- Conflict detection for courses
+- Management school support
 
-2. Open your browser and navigate to `http://localhost:5000`.
+### 🏆 Contributors
 
-3. Input your courses and their schedule details in the provided form.
+- [@AsharAmir](https://github.com/AsharAmir) - Project Creator & Maintainer
 
-4. Click "Generate Timetable" to get your personalized timetable.
+*Your name could be here! 🌟*
 
-5. Download your timetable in the format of your choice.
+## 📄 License
 
-## Contributing
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-We are welcoming your contributors! If you'd like to contribute to the project:
+---
 
-1. Fork this repository.
-2. Create your feature branch.
-3. Commit your changes.
-4. Push to the branch.
-5. Open a pull request.
+<div align="center">
 
-Please make sure to follow the coding conventions used in the project and write clear commit messages.
+**Made with ❤️ for NUCES FAST Students**
+
+[⭐ Star this repo](https://github.com/AsharAmir/NUCES-FAST-TIMETABLE-PARSER) • [🍴 Fork it](https://github.com/AsharAmir/NUCES-FAST-TIMETABLE-PARSER/fork) • [📢 Share it](https://twitter.com/intent/tweet?text=Check%20out%20this%20awesome%20NUCES%20timetable%20generator!)
+
+</div>
