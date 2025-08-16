@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAST Timetable Generator (ISB CAMPUS)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='simple.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>FAST Timetable Generator (ISB CAMPUS)</h1>
+    </div>
+
+    <!-- School Tabs -->
+    <div class="school-tabs">
+        <div class="tab disabled" data-school="engineering">School of Engineering (Coming Soon)</div>
+        <div class="tab active" data-school="computing">School of Computing</div>
+        <div class="tab disabled" data-school="management">School of Management (Coming Soon)</div>
+        <div class="edit-btn" onclick="openEditModal()">⚙️ Edit</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Main Container -->
+        <div class="container">
+            <form class="form" id="timetableForm">
+                <div class="field">
+                    <label class="label">Enter your courses (comma-separated):</label>
+                    <div class="input-container">
+                        <textarea class="text-input" id="courseInput" rows="4" 
+                                  placeholder="Type course names like: Algo (CS-A), Data St (AI-A/C), S/w Re-Engg (SE-A)..."
+                                  autocomplete="off"></textarea>
+                        <div class="suggestions" id="suggestions"></div>
+                    </div>
+                    <div class="selected-courses" id="selectedCourses"></div>
+                </div>
+                
+                <div class="actions">
+                    <button type="button" class="btn btn-clear" onclick="clearCourses()">Clear All</button>
+                    <button type="submit" class="btn btn-primary">Generate Timetable</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Timetable Display -->
+        <div class="timetable-section" id="timetableSection" style="display: none;">
+            <div class="timetable-header">
+                <h2>Your Timetable</h2>
+                <div class="export-actions">
+                    <button class="btn btn-export" onclick="exportPNG()">📷 PNG</button>
+                    <button class="btn btn-export" onclick="exportPDF()">📄 PDF</button>
+                    <button class="btn btn-export" onclick="printTimetable()">🖨️ Print</button>
+                    <button class="btn btn-edit" onclick="editTimetable()">✏️ Edit</button>
+                </div>
+            </div>
+            <div class="timetable-container" id="timetableContainer">
+                <table class="timetable" id="timetableTable">
+                    <!-- Timetable will be generated here -->
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h3>Add Custom Sheet</h3>
+            <form id="customSheetForm">
+                <div class="field">
+                    <label>School Name:</label>
+                    <input type="text" id="customSchoolName" placeholder="e.g., FAST School of Business">
+                </div>
+                <div class="field">
+                    <label>Google Sheets ID:</label>
+                    <input type="text" id="customSheetId" placeholder="e.g., 1XA76yuFM_4mtkQW__2fryUBMe5EZ6XMWtBHxylhV6k8">
+                </div>
+                <div class="actions">
+                    <button type="button" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit">Add Sheet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text">Generating your timetable...</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        Made with ❤️ by <a href="https://github.com/AsharAmir" target="_blank">Ashar</a>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='simple.js') }}"></script>
+</body>
+</html>

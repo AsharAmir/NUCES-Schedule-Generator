@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Credentials
+credentials.json
+*.json
+
+# Temporary files
+tempCodeRunnerFile.py
+*.xlsx
+*.tmp
+
+# Development
+.env
+.vercel/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
